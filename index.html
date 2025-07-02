@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sokoldalú Rádió</title>
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="theme-fm-radio">
+
+    <div class="theme-selector">
+        <button id="fmRadioThemeBtn" class="active">FM Rádió</button>
+        <button id="carDisplayThemeBtn">Autós Kijelző</button>
+    </div>
+
+    <div class="radio-container">
+        <div id="fmRadioElements" class="theme-element">
+            <h1>FM Rádió 2025 (Budapest)</h1>
+            
+            <div class="display-panel">
+                <div id="frequencyDisplay">88.1 MHz</div>
+                <div id="radioName">Nincs állomás</div>
+                <div id="radioDescription">Hangold be a kedvenc rádiódat!</div>
+                <div id="fmNowPlaying" class="now-playing">Épp szól: Nincs infó</div>
+            </div>
+
+            <div class="controls">
+                <button class="control-button" id="prevFreqButton">&lt;</button>
+                <input type="range" id="frequencySlider" min="881" max="1080" value="881">
+                <button class="control-button" id="nextFreqButton">&gt;</button>
+            </div>
+            
+            <div id="messageDisplay"></div>
+
+            <audio id="radioPlayer" preload="auto"></audio>
+            <audio id="hissPlayer" src="hiss.mp3" loop preload="auto"></audio>
+        </div>
+
+        <div id="carDisplayElements" class="theme-element hidden">
+            <div class="carplay-top-bar">
+                <span id="carplayTime" class="time">--:--</span>
+                <span class="signal-strength">
+                    <i class="fas fa-signal"></i> <span class="network-type">5G</span>
+                </span>
+            </div>
+
+            <div id="carPlayHome" class="carplay-screen">
+                <div class="app-grid">
+                    <div class="app-icon" id="carPlayPhoneApp"> <img src="images/phone_icon.png" alt="Telefon ikon">
+                        <span>Telefon</span>
+                    </div>
+                    <div class="app-icon" id="carPlayFmApp">
+                        <img src="images/fm_radio_icon.png" alt="FM Rádió ikon">
+                        <span>FM Rádió</span>
+                    </div>
+                    <div class="app-icon" id="carPlayMapsApp"> <img src="images/maps_icon.png" alt="Térképek ikon">
+                        <span>Térképek</span>
+                    </div>
+                    <div class="app-icon" id="carPlayMessagesApp"> <img src="images/messages_icon.png" alt="Üzenetek ikon">
+                        <span>Üzenetek</span>
+                    </div>
+                    
+                    <div class="app-icon" id="carPlaySettingsApp2"> <img src="images/dashboard_icon.png" alt="Műszerfal ikon">
+                        <span>Műszerfal</span>
+                    </div>
+                    <div class="app-icon" id="carPlayOnlineApp">
+                        <img src="images/online_radio_icon.png" alt="Online Rádió ikon">
+                        <span>Online Rádió</span>
+                    </div>
+                    <div class="app-icon" id="carPlayCalendarApp"> <img src="images/calendar_icon.png" alt="Naptár ikon">
+                        <span>Naptár</span>
+                    </div>
+                    <div class="app-icon" id="carPlaySettingsApp"> <img src="images/settings_icon.png" alt="Beállítások ikon">
+                        <span>Beállítások</span>
+                    </div>
+                    <div class="app-icon" id="carPlayPodcastsApp"> <img src="images/podcasts_icon.png" alt="Podcastok ikon">
+                        <span>Podcastok</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="carFmModeContent" class="carplay-screen hidden">
+                <div class="carplay-header">
+                    <button class="back-button" id="backToCarPlayHomeFm"><i class="fas fa-chevron-left"></i></button>
+                    <h2>FM Rádió</h2>
+                </div>
+                <div class="display-panel car-fm-panel">
+                    <div id="carFmFrequencyDisplay">88.1 MHz</div>
+                    <div id="carFmRadioName">Nincs állomás</div>
+                    <div id="carFmRadioDescription">Hangold be a kedvenc rádiódat!</div>
+                    <div id="carFmNowPlaying" class="now-playing">Épp szól: Nincs infó</div>
+                </div>
+                <div class="controls car-fm-controls">
+                    <button class="control-button" id="carFmPrevFreqButton">&lt;</button>
+                    <input type="range" id="carFmFrequencySlider" min="881" max="1080" value="881">
+                    <button class="control-button" id="carFmNextFreqButton">&gt;</button>
+                </div>
+                <div id="carFmMessageDisplay"></div>
+            </div>
+
+            <div id="carOnlineModeContent" class="carplay-screen hidden">
+                <div class="carplay-header">
+                    <button class="back-button" id="backToCarPlayHomeOnline"><i class="fas fa-chevron-left"></i></button>
+                    <h2>Online Rádió</h2>
+                </div>
+                <div class="online-radio-list-wrapper">
+                    <div id="onlineRadioListDisplay" class="online-radio-list">
+                        </div>
+                </div>
+                <div class="online-player-display">
+                    <p id="selectedOnlineRadioName">Válassz rádiót a listából!</p>
+                    <p id="selectedOnlineRadioInfo"></p>
+                    <div id="onlineNowPlaying" class="now-playing">Épp szól: Nincs infó</div>
+                    <audio id="onlinePlayer" controls preload="auto"></audio>
+                </div>
+                <div id="onlineMessageDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Rádióállomások adatai (csak Budapest, 2025-ös lista alapján)
+        const radioStations = {
+            minFreq: 875, 
+            maxFreq: 1080,
+            stations: {
+                881: { name: "Kossuth Rádió", description: "MTVA közszolgálati hírrádió.", streamUrl: "https://icast.connectmedia.hu/4736/mr1.mp3" },
+                895: { name: "Rádió 1", description: "Kereskedelmi rádió, popzene, reggeli show.", streamUrl: "https://icast.connectmedia.hu/5201/live.mp3" },
+                903: { name: "Jazzy Rádió", description: "Jazz, soul és funk zene.", streamUrl: "https://radio.musorok.org/listen/jazzy/jazzy.mp3" },
+                921: { name: "Bartók Rádió", description: "El Rontja a weboldalt szoval nem.", streamUrl: "https://stream.mtva.hu/mr3/mr3.mp3" },
+                939: { name: "Dankó Rádió", description: "Népzenei és nótás adó.", streamUrl: "https://stream.mtva.hu/mr4/mr4.mp3" },
+                948: { name: "Petőfi Rádió", description: "Közszolgálati adó, kortárs magyar zene.", streamUrl: "https://icast.connectmedia.hu/4738/mr2.mp3" },
+                958: { name: "InfoRádió", description: "Magyarország első hírrádiója.", streamUrl: "https://stream.inforadio.hu:8443/live.mp3" },
+                964: { name: "Best FM", description: "Kereskedelmi rádió, változatos könnyűzene.", streamUrl: "https://icast.connectmedia.hu/5101/live.mp3" }, 
+                986: { name: "Klubrádió", description: "Beszélgetős, közéleti rádió.", streamUrl: "https://stream.klubradio.hu/klubradio.aac" }, 
+                1039: { name: "Mária Rádió", description: "Vallási és keresztény témák.", streamUrl: "http://www.mariaradio.hu:8000/mr" },
+                1075: { name: "Tilos Rádió", description: "Közösségi rádió, alternatív zene.", streamUrl: "https://stream.tilos.hu/tilos" },
+            }
+        };
+
+        // Online rádiók listája (Autós Kijelző - Online módhoz)
+        // IDE FOGOD MAJD BEÍRNI A SAJÁT ONLINE RÁDIÓ IKONJÁNAK ÚTVONALÁT!
+        const onlineRadioStations = [
+            { id: "ozone", name: "Ozone FM", description: "Elektronikus zene és DJ szettek.", streamUrl: "https://oxygenmusic.hu:8443/ozonefm_320", iconUrl: "images/online_ozone.png" }, // Pl. images/online_ozone.png
+            { id: "deejay", name: "Deejayradio", description: "Dance és elektronikus slágerek.", streamUrl: "https://s01.diazol.hu:9042/stream", iconUrl: "images/online_deejay.png" },
+            { id: "rise", name: "Rise FM", description: "Trance és elektronikus zene.", streamUrl: "https://oxygenmusic.hu:8443/RISE_CLASSIC_128", iconUrl: "images/online_rise.png" },
+            { id: "classic", name: "Classic FM", description: "Klasszikus zene és crossover.", streamUrl: "https://stream.laut.fm/classic-radio", iconUrl: "images/online_classic.png" },
+            { id: "cool", name: "COOL FM", description: "Mai slágerek és popzene.", streamUrl: "https://mediagw.e-tiger.net:443/stream/coolfm", iconUrl: "images/online_cool.png" },
+            { id: "index", name: "Index Rádió", description: "Hírek, aktualitások és zene az Index Rádiótól.", streamUrl: "https://stream.index.hu/indexradio.aac", iconUrl: "images/online_index.png" }, 
+        ];
+
+
+        // Elemek az FM Rádió témához
+        const frequencySlider = document.getElementById('frequencySlider');
+        const frequencyDisplay = document.getElementById('frequencyDisplay');
+        const radioNameDisplay = document.getElementById('radioName');
+        const radioDescriptionDisplay = document.getElementById('radioDescription');
+        const fmNowPlaying = document.getElementById('fmNowPlaying');
+        const messageDisplay = document.getElementById('messageDisplay');
+        const prevFreqButton = document.getElementById('prevFreqButton');
+        const nextFreqButton = document.getElementById('nextFreqButton');
+        
+        // Audio elemek (általánosak mindkét FM módhoz)
+        const radioPlayer = document.getElementById('radioPlayer');
+        const hissPlayer = document.getElementById('hissPlayer');
+        
+        // Témaválasztó gombok
+        const fmRadioThemeBtn = document.getElementById('fmRadioThemeBtn');
+        const carDisplayThemeBtn = document.getElementById('carDisplayThemeBtn');
+        const fmRadioElements = document.getElementById('fmRadioElements');
+        const carDisplayElements = document.getElementById('carDisplayElements');
+
+        // Autós Kijelző (CarPlay) elemei
+        const carPlayTime = document.getElementById('carplayTime'); 
+        const carPlayHome = document.getElementById('carPlayHome');
+        const carPlayFmApp = document.getElementById('carPlayFmApp');
+        const carPlayOnlineApp = document.getElementById('carPlayOnlineApp');
+
+        const carFmModeContent = document.getElementById('carFmModeContent');
+        const backToCarPlayHomeFm = document.getElementById('backToCarPlayHomeFm');
+        const carFmFrequencyDisplay = document.getElementById('carFmFrequencyDisplay');
+        const carFmRadioName = document.getElementById('carFmRadioName');
+        const carFmRadioDescription = document.getElementById('carFmRadioDescription');
+        const carFmNowPlaying = document.getElementById('carFmNowPlaying');
+        const carFmFrequencySlider = document.getElementById('carFmFrequencySlider');
+        const carFmPrevFreqButton = document.getElementById('carFmPrevFreqButton');
+        const carFmNextFreqButton = document.getElementById('carFmNextFreqButton');
+        const carFmMessageDisplay = document.getElementById('carFmMessageDisplay');
+        
+        const carOnlineModeContent = document.getElementById('carOnlineModeContent');
+        const backToCarPlayHomeOnline = document.getElementById('backToCarPlayHomeOnline');
+        const onlineRadioListDisplay = document.getElementById('onlineRadioListDisplay');
+        const selectedOnlineRadioName = document.getElementById('selectedOnlineRadioName');
+        const selectedOnlineRadioInfo = document.getElementById('selectedOnlineRadioInfo');
+        const onlineNowPlaying = document.getElementById('onlineNowPlaying');
+        const onlinePlayer = document.getElementById('onlinePlayer');
+        const onlineMessageDisplay = document.getElementById('onlineMessageDisplay');
+
+
+        let currentFrequency = parseInt(frequencySlider.value);
+        let isFmRadioTheme = true;
+
+        // --- Idő frissítése CarPlay-en ---
+        function updateCarPlayTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            carPlayTime.textContent = `${hours}:${minutes}`;
+        }
+        // Frissíti az időt 1 másodpercenként
+        setInterval(updateCarPlayTime, 1000); 
+
+
+        // --- Témaváltó logika (FM Rádió vs. Autós Kijelző) ---
+        function setFmRadioTheme() {
+            if (!isFmRadioTheme) {
+                document.body.classList.remove('theme-car-display');
+                document.body.classList.add('theme-fm-radio');
+                fmRadioElements.classList.remove('hidden');
+                carDisplayElements.classList.add('hidden');
+                fmRadioThemeBtn.classList.add('active');
+                carDisplayThemeBtn.classList.remove('active');
+                isFmRadioTheme = true;
+                
+                stopOnlinePlayer(); // Online lejátszó leállítása
+                // Az FM rádió updateRadioInfo indítja majd el a megfelelő állapotban a hisst
+                updateRadioInfo(currentFrequency, frequencyDisplay, radioNameDisplay, radioDescriptionDisplay, fmNowPlaying, messageDisplay); 
+            }
+        }
+
+        function setCarDisplayTheme() {
+            if (isFmRadioTheme) {
+                document.body.classList.remove('theme-fm-radio');
+                document.body.classList.add('theme-car-display');
+                fmRadioElements.classList.add('hidden');
+                carDisplayElements.classList.remove('hidden');
+                fmRadioThemeBtn.classList.remove('active');
+                carDisplayThemeBtn.classList.add('active');
+                isFmRadioTheme = false;
+                
+                stopAllAudioPlayers(); // Minden audió lejátszó leállítása (új függvény)
+                showCarPlayHome(); // Autós kijelzőre váltva a CarPlay főképernyő jön be
+                updateCarPlayTime(); // Frissítjük az időt azonnal
+            }
+        }
+
+        // --- Közös audio vezérlők (finomítva a sistergésre) ---
+
+        // Ez a függvény állít le minden audió lejátszót és némítja a sistergést.
+        function stopAllAudioPlayers() {
+            if (!radioPlayer.paused) {
+                radioPlayer.pause();
+                radioPlayer.src = ""; // Fontos: töröljük a src-t is
+            }
+            if (!onlinePlayer.paused) {
+                onlinePlayer.pause();
+                onlinePlayer.src = ""; // Fontos: töröljük a src-t is
+            }
+            if (!hissPlayer.paused) {
+                hissPlayer.pause();
+                hissPlayer.volume = 0; // Biztos, ami biztos
+                hissPlayer.currentTime = 0; // Vissza az elejére
+            }
+
+            // Üzenetek törlése minden lejátszónál
+            messageDisplay.textContent = "";
+            carFmMessageDisplay.textContent = "";
+            fmNowPlaying.textContent = "Épp szól: Nincs infó";
+            carFmNowPlaying.textContent = "Épp szól: Nincs infó";
+            onlineNowPlaying.textContent = "Épp szól: Nincs infó";
+            onlineMessageDisplay.textContent = ""; 
+        }
+
+        // A korábbi stopFmRadioAndHiss() most már ezt a `stopAllAudioPlayers()`-t fogja meghívni,
+        // hogy biztosan leálljon az FM rádió ÉS a sistergés is, amikor valami mást indítunk el.
+        function stopFmRadioAndHiss() {
+            // Itt csak az FM rádióra és sistergésre specifikus dolgokat csináljuk,
+            // de az általános leállítást a stopAllAudioPlayers() végzi el.
+            stopAllAudioPlayers();
+        }
+
+        function stopOnlinePlayer() {
+            // Itt csak az online rádióra specifikus dolgokat csináljuk,
+            // de az általános leállítást a stopAllAudioPlayers() végzi el.
+            stopAllAudioPlayers();
+        }
+
+
+        // --- CarPlay Nézetek Kezelése ---
+        function showCarPlayHome() {
+            carPlayHome.classList.remove('hidden');
+            carFmModeContent.classList.add('hidden');
+            carOnlineModeContent.classList.add('hidden');
+            stopAllAudioPlayers(); // CarPlay home esetén ne legyen se FM, se Online, se sistergés
+        }
+
+        function showCarPlayFm() {
+            carPlayHome.classList.add('hidden');
+            carFmModeContent.classList.remove('hidden');
+            carOnlineModeContent.classList.add('hidden');
+            
+            stopOnlinePlayer(); // Online lejátszó leállítása
+            updateRadioInfo(currentFrequency, carFmFrequencyDisplay, carFmRadioName, carFmRadioDescription, carFmNowPlaying, carFmMessageDisplay);
+        }
+
+        function showCarPlayOnline() {
+            carPlayHome.classList.add('hidden');
+            carFmModeContent.classList.add('hidden');
+            carOnlineModeContent.classList.remove('hidden');
+
+            stopFmRadioAndHiss(); // FM rádió és sistergés leállítása
+            populateOnlineRadioList();
+            selectedOnlineRadioName.textContent = "Válassz rádiót a listából!";
+            selectedOnlineRadioInfo.textContent = "";
+            onlineNowPlaying.textContent = "Épp szól: Nincs infó";
+            onlineMessageDisplay.textContent = "";
+        }
+
+        // --- FM Rádió logika (újrahasználható függvénnyé alakítva) ---
+        function updateRadioInfo(freq, freqDisplayElem, nameDisplayElem, descDisplayElem, nowPlayingElem, msgDisplayElem) {
+            currentFrequency = freq;
+            const freqMHz = (freq / 10).toFixed(1);
+            freqDisplayElem.textContent = `${freqMHz} MHz`;
+            
+            const station = radioStations.stations[currentFrequency];
+
+            if (station) {
+                nameDisplayElem.textContent = station.name;
+                descDisplayElem.textContent = station.description;
+                msgDisplayElem.textContent = "Tisztán hallható";
+                nowPlayingElem.textContent = `Épp szól: ${station.name}`;
+
+                // Sistergés leállítása, ha van adás
+                hissPlayer.volume = 0;
+                if (!hissPlayer.paused) { // CSAK akkor szüneteltessük, ha megy
+                    hissPlayer.pause();
+                }
+
+                if (radioPlayer.src !== station.streamUrl) {
+                    radioPlayer.src = station.streamUrl;
+                    radioPlayer.load();
+                    radioPlayer.play().then(() => {
+                        console.log(`Lejátszás: ${station.name}`);
+                    }).catch(e => {
+                        console.error("Autoplay blokkolva vagy stream hiba (FM):", e);
+                        msgDisplayElem.textContent = "Kattints a lejátszás gombra!";
+                    });
+                } else if (radioPlayer.paused) {
+                    radioPlayer.play().catch(e => {
+                        console.error("Autoplay blokkolva vagy stream hiba (FM):", e);
+                        msgDisplayElem.textContent = "Kattints a lejátszás gombra!";
+                    });
+                }
+                
+                radioPlayer.volume = 1;
+
+            } else {
+                nameDisplayElem.textContent = "Nincs állomás";
+                descDisplayElem.textContent = "Hangolj tovább!";
+                nowPlayingElem.textContent = "Épp szól: Nincs infó";
+                
+                radioPlayer.pause();
+                radioPlayer.src = "";
+                
+                // Sistergés elindítása, ha nincs adás
+                hissPlayer.volume = 1;
+                // Csak akkor játssza le, ha az FM rádió témában vagyunk ÉS ha az isFmRadioTheme igaz.
+                // Így a CarPlay módban vagy online módban nem fog sisteregni.
+                if (hissPlayer.paused && isFmRadioTheme) { 
+                    hissPlayer.play().catch(e => console.error("Hiss autoplay error:", e));
+                }
+                msgDisplayElem.textContent = "Sistergés...";
+
+                const closestStation = findClosestStation(currentFrequency);
+                if (closestStation) {
+                    const diff = Math.abs(currentFrequency - closestStation.freq);
+                    const maxDiffForMix = 5;
+                    if (diff <= maxDiffForMix) {
+                        const ratio = diff / maxDiffForMix;
+                        radioPlayer.volume = 1 - ratio;
+                        hissPlayer.volume = ratio;
+                        radioPlayer.src = closestStation.station.streamUrl;
+                        if (radioPlayer.paused) {
+                             radioPlayer.load();
+                             radioPlayer.play().catch(e => console.warn("Partial radio play error:", e));
+                        }
+                        msgDisplayElem.textContent = `Jel gyenge: ${closestStation.station.name}`;
+                        nowPlayingElem.textContent = `Épp szól: ${closestStation.station.name}`;
+                    }
+                }
+            }
+        }
+
+        // Segédfüggvény a legközelebbi állomás megtalálásához
+        function findClosestStation(currentFreq) {
+            let closestFreq = null;
+            let minDiff = Infinity;
+            for (const freqStr in radioStations.stations) {
+                const freq = parseInt(freqStr);
+                const diff = Math.abs(freq - currentFreq);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestFreq = freq;
+                }
+            }
+            if (closestFreq !== null) {
+                return {
+                    freq: closestFreq,
+                    station: radioStations.stations[closestFreq]
+                };
+            }
+            return null;
+        }
+
+        // --- Online Rádió lista logika (dinamikus gombokkal) ---
+        function populateOnlineRadioList() {
+            onlineRadioListDisplay.innerHTML = '';
+            onlineRadioStations.forEach(radio => {
+                const radioItem = document.createElement('div');
+                radioItem.classList.add('online-radio-item');
+                radioItem.dataset.id = radio.id;
+
+                const img = document.createElement('img');
+                // Itt hivatkozunk a képfájlra az images mappából
+                // Fontos: ha még nincsenek meg, akkor használjuk a placeholder-t, különben 404 hiba lesz
+                img.src = radio.iconUrl || 'https://via.placeholder.com/100/CCCCCC/000000?text=NO+ICON'; 
+                img.alt = `${radio.name} ikon`;
+                radioItem.appendChild(img);
+
+                const span = document.createElement('span');
+                span.textContent = radio.name;
+                radioItem.appendChild(span);
+
+                radioItem.addEventListener('click', () => {
+                    playOnlineRadio(radio.id);
+                });
+
+                onlineRadioListDisplay.appendChild(radioItem);
+            });
+        }
+
+        function playOnlineRadio(radioId) {
+            const selectedRadio = onlineRadioStations.find(radio => radio.id === radioId);
+
+            stopAllAudioPlayers(); // MINDENT leállítunk, mielőtt az online rádiót indítjuk!
+
+            if (selectedRadio && selectedRadio.streamUrl && !selectedRadio.streamUrl.includes("example.com/")) {
+                selectedOnlineRadioName.textContent = selectedRadio.name;
+                selectedOnlineRadioInfo.textContent = selectedRadio.description;
+                onlineNowPlaying.textContent = `Épp szól: ${selectedRadio.name}`;
+                onlinePlayer.src = selectedRadio.streamUrl;
+                onlinePlayer.load();
+                onlinePlayer.play().then(() => {
+                    onlineMessageDisplay.textContent = `Hallgatod: ${selectedRadio.name}`;
+                }).catch(e => {
+                    console.error("Online player autoplay blokkolva vagy stream hiba:", e);
+                    onlineMessageDisplay.textContent = "Hiba! Kattints a lejátszás gombra!";
+                });
+            } else {
+                selectedOnlineRadioName.textContent = "Válassz rádiót a listából!";
+                selectedOnlineRadioInfo.textContent = "Kérjük, ellenőrizd a stream és/vagy ikon URL-t!";
+                onlineNowPlaying.textContent = "Épp szól: Nincs infó";
+                onlineMessageDisplay.textContent = "Stream nem elérhető vagy érvénytelen link.";
+            }
+        }
+
+        // --- Eseménykezelők ---
+
+        // Fő témaváltó gombok
+        fmRadioThemeBtn.addEventListener('click', setFmRadioTheme);
+        carDisplayThemeBtn.addEventListener('click', setCarDisplayTheme);
+
+        // CarPlay App ikonok (csak a funkcionális ikonoknak van eseménykezelője)
+        carPlayFmApp.addEventListener('click', showCarPlayFm);
+        carPlayOnlineApp.addEventListener('click', showCarPlayOnline);
+
+        // Vissza a CarPlay Home gombok
+        backToCarPlayHomeFm.addEventListener('click', showCarPlayHome);
+        backToCarPlayHomeOnline.addEventListener('click', showCarPlayHome);
+
+        // FM Rádió téma csúszka és gombok
+        frequencySlider.addEventListener('input', (event) => {
+            updateRadioInfo(parseInt(event.target.value), frequencyDisplay, radioNameDisplay, radioDescriptionDisplay, fmNowPlaying, messageDisplay);
+        });
+        prevFreqButton.addEventListener('click', () => {
+            let newFreq = currentFrequency - 1;
+            if (newFreq < radioStations.minFreq) newFreq = radioStations.minFreq;
+            frequencySlider.value = newFreq;
+            updateRadioInfo(newFreq, frequencyDisplay, radioNameDisplay, radioDescriptionDisplay, fmNowPlaying, messageDisplay);
+        });
+        nextFreqButton.addEventListener('click', () => {
+            let newFreq = currentFrequency + 1;
+            if (newFreq > radioStations.maxFreq) newFreq = radioStations.maxFreq;
+            frequencySlider.value = newFreq;
+            updateRadioInfo(newFreq, frequencyDisplay, radioNameDisplay, radioDescriptionDisplay, fmNowPlaying, messageDisplay);
+        });
+
+        // Autós kijelző - FM mód csúszka és gombok
+        carFmFrequencySlider.addEventListener('input', (event) => {
+            updateRadioInfo(parseInt(event.target.value), carFmFrequencyDisplay, carFmRadioName, carFmRadioDescription, carFmNowPlaying, carFmMessageDisplay);
+        });
+        carFmPrevFreqButton.addEventListener('click', () => {
+            let newFreq = currentFrequency - 1;
+            if (newFreq < radioStations.minFreq) newFreq = radioStations.minFreq;
+            carFmFrequencySlider.value = newFreq;
+            updateRadioInfo(newFreq, carFmFrequencyDisplay, carFmRadioName, carFmRadioDescription, carFmNowPlaying, carFmMessageDisplay);
+        });
+        carFmNextFreqButton.addEventListener('click', () => {
+            let newFreq = currentFrequency + 1;
+            if (newFreq > radioStations.maxFreq) newFreq = radioStations.maxFreq;
+            carFmFrequencySlider.value = newFreq;
+            updateRadioInfo(newFreq, carFmFrequencyDisplay, carFmRadioName, carFmRadioDescription, carFmNowPlaying, carFmMessageDisplay);
+        });
+
+        // Kezdeti beállítások az oldal betöltésekor
+        document.addEventListener('DOMContentLoaded', () => {
+            setFmRadioTheme();
+            
+            frequencySlider.min = radioStations.minFreq;
+            frequencySlider.max = radioStations.maxFreq;
+            frequencySlider.value = radioStations.minFreq;
+
+            carFmFrequencySlider.min = radioStations.minFreq;
+            carFmFrequencySlider.max = radioStations.maxFreq;
+            carFmFrequencySlider.value = radioStations.minFreq;
+
+            // Kezdetben a sistergés lejátszó betöltése és némítása
+            hissPlayer.src = "hiss.mp3"; 
+            hissPlayer.load();
+            hissPlayer.volume = 0;
+            // Csak akkor indítsa el, ha már felhasználói interakció történt,
+            // különben a böngésző blokkolhatja.
+            // A play() Promise-t ad vissza, ami hibát dobhat.
+            hissPlayer.play().catch(e => console.warn("Hiss player autoplay blocked on start (expected if no user interaction):", e));
+
+
+            radioPlayer.addEventListener('error', (e) => {
+                console.error("Audio lejátszási hiba (FM):", e);
+                const currentMsgDisplay = isFmRadioTheme ? messageDisplay : carFmMessageDisplay;
+                currentMsgDisplay.textContent = "Hiba! A rádió stream nem játszható le. Próbálj másik frekvenciát!";
+                if (isFmRadioTheme) {
+                    fmNowPlaying.textContent = "Épp szól: Hiba történt!";
+                } else {
+                    carFmNowPlaying.textContent = "Épp szól: Hiba történt!";
+                }
+                // Ha hiba van az FM lejátszón, indítsuk el a hisst, ha az FM módban vagyunk
+                if (isFmRadioTheme) {
+                    hissPlayer.volume = 1;
+                    if (hissPlayer.paused) hissPlayer.play().catch(e => console.warn("Hiss player autoplay blocked on error:", e));
+                }
+            });
+
+            onlinePlayer.addEventListener('error', (e) => {
+                console.error("Audio lejátszási hiba (Online):", e);
+                onlineMessageDisplay.textContent = "Hiba! Az online rádió stream nem játszható le. Próbálj másik rádiót!";
+                onlineNowPlaying.textContent = "Épp szól: Hiba történt!";
+                onlinePlayer.src = "";
+                // Online hiba esetén biztosan állítsuk le a hisst is
+                if (!hissPlayer.paused) {
+                    hissPlayer.pause();
+                    hissPlayer.volume = 0;
+                }
+            });
+
+            updateCarPlayTime(); // Első időfrissítés betöltéskor
+        });
+
+    </script>
+</body>
+</html>

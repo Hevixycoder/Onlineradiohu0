@@ -1,0 +1,639 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto+Mono:wght@400;700&display=swap');
+
+/* Alap stílusok */
+body {
+    font-family: 'Roboto Mono', monospace;
+    color: #ecf0f1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: background 0.5s ease;
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch;
+}
+
+/* FM Rádió téma alapértelmezett háttérrel */
+body.theme-fm-radio {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+}
+
+/* Autós Kijelző téma háttérrel (CarPlay) */
+body.theme-car-display {
+    background: radial-gradient(circle at top left, #001a2b 0%, #003355 100%);
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(2, 60, 100, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(2, 60, 100, 0.3) 0%, transparent 50%);
+}
+
+
+/* Fő téma kiválasztó gombok */
+.theme-selector {
+    margin-bottom: 20px;
+    background-color: #222;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    display: flex;
+    gap: 10px;
+}
+.theme-selector button {
+    background-color: #333;
+    color: #eee;
+    border: 1px solid #555;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+.theme-selector button:hover {
+    background-color: #444;
+    border-color: #777;
+}
+.theme-selector button.active {
+    background-color: #007bff;
+    border-color: #0056b3;
+    color: white;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+}
+
+/* Rádió konténer */
+.radio-container {
+    background-color: #1a1a1a;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    padding: 30px; /* Alap padding, CarPlay mód felülírja */
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+    border: 2px solid #555;
+    position: relative;
+    transition: background-color 0.5s ease, border-color 0.5s ease;
+    flex-shrink: 0;
+    margin-bottom: 20px;
+}
+
+.radio-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    border-top-left-radius: 13px;
+    border-top-right-radius: 13px;
+    transition: background 0.5s ease;
+}
+
+/* Display panel közös stílusok */
+.display-panel {
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.display-panel #frequencyDisplay,
+.display-panel #carFmFrequencyDisplay {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 4.5em;
+    letter-spacing: 2px;
+    min-width: 250px;
+}
+.display-panel #radioName,
+.display-panel #carFmRadioName {
+    font-size: 1.6em;
+    margin-top: 10px;
+    font-weight: bold;
+}
+.display-panel #radioDescription,
+.display-panel #carFmRadioDescription {
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin-top: 5px;
+    min-height: 2em;
+}
+.now-playing {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #66ccff;
+    margin-top: 15px;
+    min-height: 1.2em;
+}
+
+
+/* Controls közös stílusok */
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+.control-button {
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 2em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+    outline: none;
+}
+.control-button:hover {
+    transform: translateY(-2px);
+}
+.control-button:active {
+    transform: translateY(0);
+}
+
+/* Range input közös stílusok */
+input[type="range"] {
+    width: 80%;
+    height: 15px;
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+    border-radius: 8px;
+    margin: 20px 0;
+    cursor: grab;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: grab;
+    transition: background 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s;
+}
+input[type="range"]::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.1);
+}
+input[type="range"]::-moz-range-thumb {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: grab;
+    transition: background 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s;
+}
+input[type="range"]::-moz-range-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.1);
+}
+input[type="range"]::-moz-range-track {
+    border-radius: 8px;
+}
+
+/* Hiba / üzenet kijelzők */
+#messageDisplay, #carFmMessageDisplay, #onlineMessageDisplay {
+    font-size: 1.1em;
+    margin-top: 15px;
+    min-height: 1.5em;
+}
+
+/* Rejtett elem osztály */
+.hidden {
+    display: none !important;
+}
+
+/* --- FM Rádió Téma Specifikus Stílusok --- */
+body.theme-fm-radio .radio-container::before {
+    background: linear-gradient(to right, #00f0ff, #00c0ff);
+}
+body.theme-fm-radio h1 {
+    color: #00e0ff;
+    text-shadow: 0 0 10px rgba(0, 224, 255, 0.6);
+}
+body.theme-fm-radio .display-panel {
+    background-color: #0d0d0d;
+    border: 2px solid #00f0ff;
+    box-shadow: inset 0 0 10px rgba(0, 224, 255, 0.4), 0 0 8px rgba(0, 224, 255, 0.4);
+}
+body.theme-fm-radio #frequencyDisplay {
+    color: #00ff00;
+    text-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+}
+body.theme-fm-radio #radioName {
+    color: #e0e0e0;
+}
+body.theme-fm-radio #radioDescription {
+    color: #bbb;
+}
+body.theme-fm-radio .control-button {
+    background-color: #007bff;
+    color: white;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+body.theme-fm-radio .control-button:hover {
+    background-color: #0056b3;
+}
+body.theme-fm-radio .control-button:active {
+    background-color: #003f80;
+}
+body.theme-fm-radio input[type="range"] {
+    background: #444;
+}
+body.theme-fm-radio input[type="range"]::-webkit-slider-thumb,
+body.theme-fm-radio input[type="range"]::-moz-range-thumb {
+    background: #00e0ff;
+    box-shadow: 0 0 10px rgba(0, 224, 255, 0.8);
+    border: 2px solid #00c0ff;
+}
+body.theme-fm-radio input[type="range"]::-webkit-slider-thumb:hover,
+body.theme-fm-radio input[type="range"]::-moz-range-thumb:hover {
+    background: #00c0ff;
+    box-shadow: 0 0 15px rgba(0, 224, 255, 1);
+}
+body.theme-fm-radio input[type="range"]::-webkit-slider-thumb:active,
+body.theme-fm-radio input[type="range"]::-moz-range-thumb:active {
+    background: #00a0e0;
+    box-shadow: 0 0 20px rgba(0, 224, 255, 1);
+}
+body.theme-fm-radio #messageDisplay {
+    color: #f39c12;
+}
+
+
+/* --- Autós Kijelző Téma Specifikus Stílusok (CarPlay) --- */
+body.theme-car-display .radio-container {
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(51, 102, 204, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(51, 102, 204, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 0px; /* Ezt most 0-ra állítjuk, hogy a felső sáv és az app-grid a széléig menjen */
+}
+body.theme-car-display .radio-container::before {
+    background: linear-gradient(to right, rgba(51, 102, 204, 0.8), rgba(0, 64, 128, 0.8));
+}
+body.theme-car-display h1 {
+    display: none; /* A CarPlay módban már nem használjuk a h1 címet */
+}
+
+/* CarPlay Felső Sáv (Idő, Térerő, Hálózat) */
+.carplay-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 10px 15px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
+    font-size: 1.1em;
+    color: #e0e0e0;
+    text-shadow: 0 0 5px rgba(255,255,255,0.2);
+    border-top-left-radius: 13px; /* illeszkedik a container lekerekítéséhez */
+    border-top-right-radius: 13px;
+}
+
+.carplay-top-bar .time {
+    font-weight: bold;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.carplay-top-bar .signal-strength {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.carplay-top-bar .signal-strength .fa-signal {
+    color: #00ff00; /* Zöld térerő ikon */
+    font-size: 1.1em;
+}
+.carplay-top-bar .network-type {
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+
+/* CarPlay Főképernyő (App Grid) */
+.app-grid {
+    display: grid;
+    /* A kép alapján 3 oszlopot feltételezünk, ami jól skálázódik mobilra is */
+    grid-template-columns: repeat(3, 1fr); /* 3 oszlop, egyforma szélességűek */
+    gap: 15px; /* Kisebb rés az ikonok között */
+    justify-content: center;
+    align-items: center;
+    padding: 20px; /* Belső padding a rácsnak */
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 0 0 10px 10px; /* Csak alul legyen lekerekítve, felül a top-bar miatt */
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    min-height: 300px; /* Hogy legyen hely az ikonoknak, ha kevés van */
+    padding-top: 60px; /* Hely a top-barnak */
+}
+
+.app-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 5px; /* Kisebb padding az ikonoknak */
+    cursor: pointer;
+    background-color: rgba(30, 30, 30, 0.7);
+    border-radius: 15px;
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4), inset 0 0 8px rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+    height: 90px; /* Fix magasság az ikonoknak */
+}
+.app-icon:hover {
+    background-color: rgba(45, 45, 45, 0.8);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.2);
+}
+.app-icon:active {
+    transform: translateY(0);
+    background-color: rgba(20, 20, 20, 0.9);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.5), inset 0 0 5px rgba(255,255,255,0.05);
+}
+.app-icon img {
+    width: 55px; /* Kicsit kisebb ikonméret */
+    height: 55px;
+    border-radius: 12px;
+    object-fit: cover;
+    margin-bottom: 5px; /* Kisebb térköz a szövegtől */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.app-icon span {
+    color: #e0e0e0;
+    font-size: 0.8em; /* Kisebb betűméret */
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    white-space: nowrap; /* A szöveg ne törjön több sorba */
+    overflow: hidden;
+    text-overflow: ellipsis; /* ... ha mégis túl hosszú */
+}
+
+/* CarPlay Alkalmazás fejléce (vissza gomb) */
+.carplay-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative; /* Ahhoz, hogy az h2 cím középen legyen */
+}
+.carplay-header h2 {
+    flex-grow: 1;
+    text-align: center;
+    color: #aaddee;
+    font-size: 1.5em;
+    text-shadow: 0 0 5px rgba(170, 221, 238, 0.2);
+    position: absolute; /* Abszolút pozícionálás, hogy a vissza gomb ne befolyásolja */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%; /* Ne legyen túl széles, hogy elférjenek a gombok */
+}
+.back-button {
+    background: none;
+    border: none;
+    color: #aaddee;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: color 0.2s, transform 0.1s;
+    outline: none;
+    z-index: 10; /* Hogy a vissza gomb a h2 fölött legyen */
+}
+.back-button:hover {
+    color: #ffffff;
+    transform: translateX(-3px);
+}
+.back-button:active {
+    transform: translateX(0);
+}
+
+
+/* Autós FM mód (CarPlay alkalmazás) */
+body.theme-car-display .car-fm-panel {
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 64, 128, 0.5);
+    box-shadow: inset 0 0 10px rgba(0, 64, 128, 0.4), 0 0 8px rgba(0, 64, 128, 0.4);
+}
+body.theme-car-display #carFmFrequencyDisplay {
+    color: #66ccff;
+    text-shadow: 0 0 15px rgba(102, 204, 255, 0.7);
+}
+body.theme-car-display #carFmRadioName {
+    color: #e0e0e0;
+}
+body.theme-car-display #carFmRadioDescription {
+    color: #bbb;
+}
+body.theme-car-display .car-fm-controls .control-button {
+    background-color: rgba(0, 64, 128, 0.7);
+    color: #aaddee;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+body.theme-car-display .car-fm-controls .control-button:hover {
+    background-color: rgba(0, 80, 160, 0.8);
+}
+body.theme-car-display .car-fm-controls .control-button:active {
+    background-color: rgba(0, 48, 96, 0.9);
+}
+body.theme-car-display .car-fm-controls input[type="range"] {
+    background: rgba(34, 34, 34, 0.7);
+}
+body.theme-car-display .car-fm-controls input[type="range"]::-webkit-slider-thumb,
+body.theme-car-display .car-fm-controls input[type="range"]::-moz-range-thumb {
+    background: #3388ff;
+    box-shadow: 0 0 10px rgba(51, 136, 255, 0.8);
+    border: 2px solid #0066cc;
+}
+body.theme-car-display .car-fm-controls input[type="range"]::-webkit-slider-thumb:hover,
+body.theme-car-display .car-fm-controls input[type="range"]::-moz-range-thumb:hover {
+    background: #007bff;
+    box-shadow: 0 0 15px rgba(0, 123, 255, 1);
+}
+body.theme-car-display .car-fm-controls input[type="range"]::-webkit-slider-thumb:active,
+body.theme-car-display .car-fm-controls input[type="range"]::-moz-range-thumb:active {
+    background: #0056b3;
+    box-shadow: 0 0 20px rgba(0, 123, 255, 1);
+}
+body.theme-car-display #carFmMessageDisplay {
+    color: #99ff99;
+    text-shadow: 0 0 5px rgba(153, 255, 153, 0.3);
+}
+
+/* Autós Online mód (CarPlay alkalmazás) */
+.online-radio-list-wrapper {
+    max-height: 250px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding-right: 10px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
+    border: 1px solid rgba(0, 64, 128, 0.3);
+}
+
+.online-radio-list-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+.online-radio-list-wrapper::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+.online-radio-list-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(51, 102, 204, 0.6);
+    border-radius: 10px;
+}
+.online-radio-list-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(51, 102, 204, 0.8);
+}
+
+
+.online-radio-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+}
+
+.online-radio-item {
+    display: flex;
+    align-items: center;
+    background-color: rgba(30, 30, 30, 0.7);
+    border-radius: 10px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.online-radio-item:hover {
+    background-color: rgba(45, 45, 45, 0.8);
+    transform: translateX(3px);
+}
+.online-radio-item:active {
+    background-color: rgba(20, 20, 20, 0.9);
+    transform: translateX(0);
+}
+.online-radio-item img {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-right: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.online-radio-item span {
+    color: #e0e0e0;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.online-player-display {
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 64, 128, 0.5);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    box-shadow: inset 0 0 10px rgba(0, 64, 128, 0.4), 0 0 8px rgba(0, 64, 128, 0.4);
+}
+
+#selectedOnlineRadioName {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8em;
+    color: #66ccff;
+    text-shadow: 0 0 10px rgba(102, 204, 255, 0.5);
+    margin-bottom: 5px;
+}
+#selectedOnlineRadioInfo {
+    font-size: 1em;
+    color: #a0c0e0;
+    margin-bottom: 10px;
+    min-height: 1.5em;
+}
+#onlinePlayer {
+    width: 95%;
+    margin-top: 15px;
+    background-color: #002233;
+    border-radius: 5px;
+    padding: 5px;
+}
+#onlinePlayer::-webkit-media-controls-panel {
+    background-color: #003355;
+    color: #66ccff;
+}
+#onlinePlayer::-webkit-media-controls-play-button,
+#onlinePlayer::-webkit-media-controls-volume-slider,
+#onlinePlayer::-webkit-media-controls-current-time-display,
+#onlinePlayer::-webkit-media-controls-time-remaining-display,
+#onlinePlayer::-webkit-media-controls-timeline {
+    filter: invert(1);
+}
+#onlineMessageDisplay {
+    color: #99ff99;
+    text-shadow: 0 0 5px rgba(153, 255, 153, 0.3);
+}
+
+/* Reszponzivitás */
+@media (max-width: 600px) {
+    .radio-container {
+        padding: 0px; /* Telefonon a padding is 0, hogy kitöltse a top-bar és app-grid a szélességet */
+    }
+    h1 {
+        font-size: 1.5em;
+    }
+    .display-panel #frequencyDisplay,
+    .display-panel #carFmFrequencyDisplay {
+        font-size: 3em;
+    }
+    .display-panel #radioName,
+    .display-panel #carFmRadioName {
+        font-size: 1.2em;
+    }
+    .control-button {
+        width: 40px;
+        height: 40px;
+        font-size: 1.8em;
+    }
+    input[type="range"]::-webkit-slider-thumb,
+    input[type="range"]::-moz-range-thumb {
+        width: 25px;
+        height: 25px;
+    }
+    .app-icon img {
+        width: 50px; /* Ikon méret csökkentése */
+        height: 50px;
+    }
+    .app-icon span {
+        font-size: 0.7em; /* Szöveg méret csökkentése */
+    }
+    .carplay-header h2 {
+        font-size: 1.3em;
+    }
+    .back-button {
+        font-size: 1.3em;
+    }
+    .online-radio-item img {
+        width: 40px;
+        height: 40px;
+    }
+    .online-radio-item span {
+        font-size: 1.1em;
+    }
+    #selectedOnlineRadioName {
+        font-size: 1.5em;
+    }
+    #selectedOnlineRadioInfo {
+        font-size: 0.9em;
+    }
+}
