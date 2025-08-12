@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Magyar Online Rádióhallgató</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        body { font-family: 'Roboto', sans-serif; margin:0; background:#f7f7f7; color:#222; }
+        header { background:#1976d2; color:#fff; padding:1rem; text-align:center; position:relative;}
+        .theme-toggle, .login-btn, .settings-btn { position:absolute; top:1rem; background:#fff; color:#1976d2; border:none; padding:0.5rem 1rem; border-radius:5px; cursor:pointer; font-weight:bold;}
+        .theme-toggle { right:1rem; }
+        .login-btn { left:1rem; }
+        .settings-btn { right:6.5rem; }
+        .user-greet { position:absolute; top:1rem; left:7.5rem; color:#fff; font-weight:bold;}
+        main { max-width:900px; margin:2rem auto; padding:1rem; background:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+        .search-bar { display:flex; gap:1rem; margin-bottom:1rem; }
+        #searchInput, #genreSelect { padding:0.5rem; font-size:1rem; border-radius:5px; border:1px solid #ccc; }
+        .radio-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:1rem; }
+        .radio-card { background:#f0f4fa; border-radius:8px; padding:1rem; box-shadow:0 1px 4px rgba(0,0,0,0.05);}
+        .radio-title { font-weight:bold; font-size:1.1rem; margin-bottom:0.3rem;}
+        .radio-genre { color:#1976d2; margin-bottom:0.5rem;}
+        .radio-actions { display:flex; flex-wrap:wrap; gap:0.5rem;}
+        .fav, .share, .queue, .timer, .info-btn, .play-btn, .sort-btn, .random-btn { background:#1976d2; color:#fff; border:none; border-radius:5px; padding:0.3rem 0.7rem; cursor:pointer;}
+        .fav.active { background:#e53935; color:#fff;}
+        .favorites-section, .recent-section, .queue-section { margin-bottom:1.5rem;}
+        .fav-item, .recent-item, .queue-item { background:#e3f2fd; padding:0.4rem 0.7rem; border-radius:5px; margin-bottom:0.3rem; cursor:pointer;}
+        .notification { display:none; position:fixed; top:1rem; right:1rem; background:#1976d2; color:#fff; padding:0.7rem 1.2rem; border-radius:8px; z-index:1000;}
+        body.dark { background:#222; color:#eee;}
+        body.dark main { background:#232a34;}
+        body.dark .radio-card { background:#2c3440;}
+        body.dark .radio-genre { color:#ffb300;}
+        body.dark .fav, body.dark .share, body.dark .queue, body.dark .timer, body.dark .info-btn, body.dark .play-btn, body.dark .sort-btn, body.dark .random-btn { background:#444; color:#ffb300;}
+        body.dark .fav.active { background:#ffb300; color:#222;}
+        body.dark .fav-item, body.dark .recent-item, body.dark .queue-item { background:#333; color:#ffb300;}
+        body.dark header { background:#111;}
+        body.dark .theme-toggle, body.dark .login-btn, body.dark .settings-btn { background:#222; color:#ffb300;}
+        .player-bar { position:fixed; left:0; bottom:0; width:100vw; display:flex; align-items:center; gap:1rem; background:#e3f2fd; border-radius:8px 8px 0 0; padding:1rem; box-shadow:0 -2px 8px rgba(0,0,0,0.08); z-index:100;}
+        .player-bar .title { font-weight:bold; flex:1;}
+        .player-bar .controls button { background:none; border:none; font-size:1.5rem; cursor:pointer; color:#1976d2;}
+        body.dark .player-bar { background:#333;}
+        .modal-bg { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:2000;}
+        .modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; color:#222; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.15); padding:2rem; z-index:2001; min-width:320px;}
+        body.dark .modal { background:#232a34; color:#ffb300;}
+        .modal input, .modal textarea { margin-bottom:1rem; padding:0.5rem; width:100%; border-radius:5px; border:1px solid #ccc;}
+        .modal button { background:#1976d2; color:#fff; border:none; border-radius:5px; padding:0.5rem 1rem; cursor:pointer;}
+        .radio-count { font-size:1rem; color:#1976d2; margin-bottom:1rem;}
+        .settings-btn { margin-left:1rem; }
+        .star { cursor:pointer; font-size:1.3em; }
+        .star.active { color:#ffd700; }
+        .star.inactive { color:#ccc; }
+        .settings-table { width:100%; border-collapse:collapse; margin-top:1em;}
+        .settings-table th, .settings-table td { padding:8px; border-bottom:1px solid #e3f2fd; text-align:left;}
+        .settings-table th { background:#e3f2fd; }
+        .settings-toplist { margin-top:1em; }
+        .settings-toplist li { margin-bottom:0.5em; }
+    </style>
+</head>
+<body>
+    <header>
+        Magyar Online Rádióhallgató
+        <button class="theme-toggle" id="themeToggle">🌙/☀️</button>
+        <button class="login-btn" id="loginBtn">Bejelentkezés</button>
+        <span class="user-greet" id="userGreet"></span>
+        <button class="settings-btn" id="settingsBtn" title="Beállítások">⚙️</button>
+    </header>
+    <main>
+        <div class="radio-count" id="radioCount"></div>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Keresés név vagy műfaj szerint...">
+            <select id="genreSelect">
+                <option value="">Összes műfaj</option>
+                <option value="pop">Pop</option>
+                <option value="rock">Rock</option>
+                <option value="retro">Retro</option>
+                <option value="klasszikus">Klasszikus</option>
+                <option value="talk">Beszélgetős</option>
+                <option value="dance">Dance</option>
+                <option value="jazz">Jazz</option>
+                <option value="folk">Népzene</option>
+                <option value="news">Hírek</option>
+            </select>
+            <button class="sort-btn" id="sortBtn" title="ABC sorrend">🔤</button>
+            <button class="random-btn" id="randomBtn" title="Véletlen rádió">🎲</button>
+        </div>
+        <div class="favorites-section">
+            <h3>Kedvencek</h3>
+            <div id="favoritesList"></div>
+        </div>
+        <div class="recent-section">
+            <h3>Legutóbb hallgatottak</h3>
+            <div id="recentList"></div>
+        </div>
+        <div class="queue-section">
+            <h3>Sorozat</h3>
+            <div id="queueList"></div>
+            <button id="queueBtn">Sorozat lejátszása</button>
+        </div>
+        <div class="radio-list" id="radioList"></div>
+        <div class="notification" id="notification"></div>
+        <div class="modal-bg" id="modalBg"></div>
+        <div class="modal" id="loginModal">
+            <h2>Bejelentkezés / Regisztráció</h2>
+            <input type="text" id="loginName" placeholder="Felhasználónév">
+            <input type="password" id="loginPass" placeholder="Jelszó">
+            <button onclick="loginUser()">Bejelentkezés</button>
+            <button onclick="registerUser()">Regisztráció</button>
+            <button onclick="hideModal('loginModal')">Mégse</button>
+        </div>
+        <div class="modal" id="settingsModal">
+            <h2>Beállítások & Toplista</h2>
+            <div id="settingsContent"></div>
+            <button onclick="hideModal('settingsModal')">Bezár</button>
+        </div>
+    </main>
+    <div class="player-bar" id="playerBar" style="display:none;">
+        <img id="playerLogo" src="" alt="Rádió logó" style="height:40px;width:40px;border-radius:8px;margin-right:1rem;object-fit:cover;box-shadow:0 2px 8px #1976d2;">
+        <span class="title" id="playerTitle"></span>
+        <span id="playerRadioInfo"></span>
+        <div class="controls">
+            <button id="playBtn" title="Lejátszás">▶️</button>
+            <button id="pauseBtn" title="Szünet">⏸️</button>
+            <button id="stopBtn" title="Leállítás">⏹️</button>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1" title="Hangerő">
+            <button id="timerBtn" title="Időzítő">⏲️</button>
+        </div>
+    </div>
+    <script>
+        // MODAL KEZELÉS
+        function showModal(id) {
+            document.getElementById('modalBg').style.display = 'block';
+            document.getElementById(id).style.display = 'block';
+        }
+        function hideModal(id) {
+            document.getElementById('modalBg').style.display = 'none';
+            document.getElementById(id).style.display = 'none';
+        }
+        document.getElementById('modalBg').onclick = function() {
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+            document.getElementById('modalBg').style.display = 'none';
+        };
+
+        // Felhasználói fiók
+        let users = JSON.parse(localStorage.getItem('users') || '{}');
+        let user = JSON.parse(localStorage.getItem('user') || 'null');
+        function showLogin() { showModal('loginModal'); }
+        function loginUser() {
+            const name = document.getElementById('loginName').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            if (users[name] && users[name].pass === pass) {
+                user = { name };
+                localStorage.setItem('user', JSON.stringify(user));
+                hideModal('loginModal');
+                showNotification(`Üdv, ${name}!`);
+                updateUserUI();
+            } else {
+                showNotification("Hibás név vagy jelszó!");
+            }
+        }
+        function registerUser() {
+            const name = document.getElementById('loginName').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            if (!name || !pass) return showNotification("Név és jelszó kötelező!");
+            if (users[name]) return showNotification("Ez a név már foglalt!");
+            users[name] = { pass };
+            localStorage.setItem('users', JSON.stringify(users));
+            showNotification("Sikeres regisztráció! Most jelentkezz be.");
+        }
+        function logoutUser() {
+            user = null;
+            localStorage.removeItem('user');
+            updateUserUI();
+            showNotification("Kijelentkeztél.");
+        }
+        function updateUserUI() {
+            document.getElementById('loginBtn').textContent = user ? "Kijelentkezés" : "Bejelentkezés";
+            document.getElementById('userGreet').textContent = user ? `👤 Üdv, ${user.name}!` : "";
+            document.getElementById('loginBtn').onclick = user ? logoutUser : showLogin;
+        }
+        document.getElementById('loginBtn').onclick = user ? logoutUser : showLogin;
+        updateUserUI();
+
+        // Rádiók adatai (csak logóval)
+        const radios = [
+            { name: "Kossuth Rádió", genre: "talk", stream: "https://icast.connectmedia.hu/4736/mr1.mp3", bitrate: 128, logo: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Kossuth_Radio_logo.png" },
+            { name: "Rádió 1", genre: "pop", stream: "https://icast.connectmedia.hu/5201/live.mp3", bitrate: 128, logo: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Radio1_logo.png" },
+            { name: "Jazzy Rádió", genre: "jazz", stream: "https://jazzy.hu/wp-content/uploads/2022/02/jazzy_logo.png", bitrate: 128, logo: "https://jazzy.hu/wp-content/uploads/2022/02/jazzy_logo.png" },
+            { name: "Dankó Rádió", genre: "folk", stream: "https://stream.mtva.hu/mr4/mr4.mp3", bitrate: 128 },
+            { name: "Petőfi Rádió", genre: "pop", stream: "https://icast.connectmedia.hu/4738/mr2.mp3", bitrate: 128 },
+            { name: "InfoRádió", genre: "news", stream: "https://stream.inforadio.hu:8443/live.mp3", bitrate: 128 },
+            { name: "Best FM", genre: "pop", stream: "https://icast.connectmedia.hu/5101/live.mp3", bitrate: 128 },
+            { name: "Klubrádió", genre: "talk", stream: "https://stream.klubradio.hu/klubradio.aac", bitrate: 128 },
+            { name: "Mária Rádió", genre: "folk", stream: "http://www.mariaradio.hu:8000/mr", bitrate: 128 },
+            { name: "Tilos Rádió", genre: "retro", stream: "https://stream.tilos.hu/tilos", bitrate: 128 },
+            { name: "Ozone FM", genre: "dance", stream: "https://oxygenmusic.hu:8443/ozonefm_320", bitrate: 128 },
+            { name: "Deejayradio", genre: "dance", stream: "https://s01.diazol.hu:9042/stream", bitrate: 128 },
+            { name: "Rise FM", genre: "dance", stream: "https://oxygenmusic.hu:8443/RISE_CLASSIC_128", bitrate: 128 },
+            { name: "Classic FM", genre: "klasszikus", stream: "https://stream.laut.fm/classic-radio", bitrate: 128 },
+            { name: "COOL FM", genre: "pop", stream: "https://mediagw.e-tiger.net:443/stream/coolfm", bitrate: 128 }
+        ];
+
+        // Csillagozás (értékelés)
+        let ratings = JSON.parse(localStorage.getItem('ratings') || '{}');
+        function setRating(name, val) {
+            ratings[name] = val;
+            localStorage.setItem('ratings', JSON.stringify(ratings));
+            renderRadios();
+        }
+
+        // Rádiók megjelenítése (csak logó és csillag)
+        function renderRadios(list = radios) {
+            const radioList = document.getElementById('radioList');
+            radioList.innerHTML = '';
+            list.forEach(radio => {
+                const rating = ratings[radio.name] || 0;
+                const logo = radio.logo ? `<img src="${radio.logo}" alt="logo" style="height:32px;vertical-align:middle;margin-right:8px;border-radius:6px;box-shadow:0 1px 6px #1976d2;">` : "";
+                const stars = Array.from({length:5},(_,i)=>`<span class="star ${i<rating?'active':'inactive'}" onclick="setRating('${radio.name}',${i+1})">&#9733;</span>`).join('');
+                const card = document.createElement('div');
+                card.className = 'radio-card';
+                card.innerHTML = `
+                    <div>${logo}<span class="radio-title">${radio.name}</span></div>
+                    <div class="radio-genre">${genreLabel(radio.genre)}</div>
+                    <div style="margin-bottom:4px;">${stars}</div>
+                    <div class="radio-actions">
+                        <button class="fav" title="Kedvenc" onclick="toggleFavorite('${radio.name}')">❤️</button>
+                        <button class="share" title="Megosztás" onclick="shareRadio('${radio.name}')">🔗</button>
+                        <button class="queue" title="Sorozatba" onclick="addToQueue('${radio.name}')">➕</button>
+                        <button class="timer" title="Időzítő" onclick="setTimer('${radio.name}')">⏲️</button>
+                        <button class="info-btn" title="Infó" onclick="showInfo('${radio.name}')">ℹ️</button>
+                        <button class="play-btn" title="Lejátszás" onclick="playRadio('${radio.name}')">▶️</button>
+                    </div>
+                `;
+                radioList.appendChild(card);
+            });
+            updateFavButtons();
+        }
+
+        // Műfaj magyarul
+        function genreLabel(genre) {
+            switch(genre) {
+                case "pop": return "Pop";
+                case "rock": return "Rock";
+                case "retro": return "Retro";
+                case "klasszikus": return "Klasszikus";
+                case "talk": return "Beszélgetős";
+                case "dance": return "Dance";
+                case "jazz": return "Jazz";
+                case "folk": return "Népzene";
+                case "news": return "Hírek";
+                default: return genre;
+            }
+        }
+
+        // Keresés és szűrés
+        document.addEventListener('DOMContentLoaded', function() {
+            renderRadios();
+            document.getElementById('searchInput').addEventListener('input', filterRadios);
+            document.getElementById('genreSelect').addEventListener('change', filterRadios);
+            document.getElementById('sortBtn').onclick = sortRadios;
+            document.getElementById('randomBtn').onclick = playRandomRadio;
+            document.getElementById('settingsBtn').onclick = function() { showModal('settingsModal'); showSettings(); };
+            loadFavorites();
+            loadRecent();
+            loadQueue();
+        });
+        function filterRadios() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const genre = document.getElementById('genreSelect').value;
+            let filtered = radios.filter(r =>
+                (r.name.toLowerCase().includes(search) || genreLabel(r.genre).toLowerCase().includes(search)) &&
+                (genre === "" || r.genre === genre)
+            );
+            renderRadios(filtered);
+        }
+        function sortRadios() {
+            radios.sort((a, b) => a.name.localeCompare(b.name));
+            renderRadios();
+        }
+        function playRandomRadio() {
+            const idx = Math.floor(Math.random() * radios.length);
+            playRadio(radios[idx].name);
+        }
+
+        // Kedvencek kezelése
+        let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        function toggleFavorite(name) {
+            if (favorites.includes(name)) {
+                favorites = favorites.filter(f => f !== name);
+            } else {
+                favorites.push(name);
+            }
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            updateFavButtons();
+            loadFavorites();
+        }
+        function updateFavButtons() {
+            document.querySelectorAll('.radio-card .fav').forEach(btn => {
+                const name = btn.parentElement.parentElement.querySelector('.radio-title').textContent;
+                btn.classList.toggle('active', favorites.includes(name));
+            });
+        }
+        function loadFavorites() {
+            const favList = document.getElementById('favoritesList');
+            favList.innerHTML = '';
+            favorites.forEach(name => {
+                const radio = radios.find(r => r.name === name);
+                if (radio) {
+                    const item = document.createElement('div');
+                    item.className = 'fav-item';
+                    item.textContent = radio.name;
+                    item.onclick = () => playRadio(radio.name);
+                    favList.appendChild(item);
+                }
+            });
+        }
+
+        // Legutóbb hallgatottak
+        let recent = JSON.parse(localStorage.getItem('recent') || '[]');
+        function addRecent(name) {
+            recent = recent.filter(r => r !== name);
+            recent.unshift(name);
+            if (recent.length > 10) recent.pop();
+            localStorage.setItem('recent', JSON.stringify(recent));
+            loadRecent();
+        }
+        function loadRecent() {
+            const recentList = document.getElementById('recentList');
+            recentList.innerHTML = '';
+            recent.forEach(name => {
+                const radio = radios.find(r => r.name === name);
+                if (radio) {
+                    const item = document.createElement('div');
+                    item.className = 'recent-item';
+                    item.textContent = radio.name;
+                    item.onclick = () => playRadio(radio.name);
+                    recentList.appendChild(item);
+                }
+            });
+        }
+
+        // Sorozat lejátszás (queue)
+        let queue = JSON.parse(localStorage.getItem('queue') || '[]');
+        function addToQueue(name) {
+            if (!queue.includes(name)) {
+                queue.push(name);
+                localStorage.setItem('queue', JSON.stringify(queue));
+                loadQueue();
+                showNotification(`${name} hozzáadva a sorozathoz.`);
+            }
+        }
+        function loadQueue() {
+            const queueList = document.getElementById('queueList');
+            queueList.innerHTML = '';
+            queue.forEach(name => {
+                const radio = radios.find(r => r.name === name);
+                if (radio) {
+                    const item = document.createElement('div');
+                    item.className = 'queue-item';
+                    item.textContent = radio.name;
+                    item.onclick = () => playRadio(radio.name);
+                    queueList.appendChild(item);
+                }
+            });
+        }
+        document.getElementById('queueBtn').onclick = function() {
+            if (queue.length > 0) playQueue(0);
+        };
+        function playQueue(idx) {
+            if (idx >= queue.length) return;
+            playRadio(queue[idx], () => playQueue(idx+1));
+        }
+
+        // Lejátszó + statisztika + adatforgalom
+        let audio = null;
+        let currentRadio = null;
+        let playStats = JSON.parse(localStorage.getItem('playStats') || '{}');
+        let playTimeStats = JSON.parse(localStorage.getItem('playTimeStats') || '{}');
+        let playDataStats = JSON.parse(localStorage.getItem('playDataStats') || '{}');
+        let playStartTime = null;
+        let playInterval = null;
+        function playRadio(name, onEnded) {
+            const radio = radios.find(r => r.name === name);
+            if (!radio) return;
+            if (audio) {
+                audio.pause();
+                audio = null;
+                stopPlayTimer();
+            }
+            audio = new Audio(radio.stream);
+            audio.volume = document.getElementById('volumeSlider').value;
+            audio.onended = () => { stopPlayTimer(); if (onEnded) onEnded(); };
+            audio.onerror = () => { showNotification("Hiba a lejátszásban, újracsatlakozás..."); setTimeout(() => playRadio(name, onEnded), 2000); };
+            audio.play();
+            currentRadio = radio;
+            document.getElementById('playerBar').style.display = 'flex';
+            document.getElementById('playerTitle').textContent = radio.name;
+            document.getElementById('playerRadioInfo').textContent = `(${genreLabel(radio.genre)})`;
+            document.getElementById('playerLogo').src = radio.logo || '';
+            document.getElementById('playerLogo').style.display = radio.logo ? 'inline-block' : 'none';
+            addRecent(name);
+            playStats[name] = (playStats[name] || 0) + 1;
+            localStorage.setItem('playStats', JSON.stringify(playStats));
+            startPlayTimer(name, radio.bitrate);
+            localStorage.setItem('lastRadio', name);
+        }
+        document.getElementById('playBtn').onclick = function() {
+            if (audio) audio.play();
+        };
+        document.getElementById('pauseBtn').onclick = function() {
+            if (audio) audio.pause();
+        };
+        document.getElementById('stopBtn').onclick = function() {
+            if (audio) { audio.pause(); audio = null; document.getElementById('playerBar').style.display = 'none'; stopPlayTimer(); }
+        };
+        document.getElementById('volumeSlider').oninput = function() {
+            if (audio) audio.volume = this.value;
+        };
+
+        // Hallgatási idő és adatforgalom mérése
+        function startPlayTimer(name, bitrate) {
+            playStartTime = Date.now();
+            if (playInterval) clearInterval(playInterval);
+            playInterval = setInterval(() => {
+                playTimeStats[name] = (playTimeStats[name] || 0) + 1;
+                const kbps = bitrate || 128;
+                const kbPerSec = kbps / 8;
+                playDataStats[name] = (playDataStats[name] || 0) + kbPerSec / 1024;
+                localStorage.setItem('playTimeStats', JSON.stringify(playTimeStats));
+                localStorage.setItem('playDataStats', JSON.stringify(playDataStats));
+            }, 1000);
+        }
+        function stopPlayTimer() {
+            if (playInterval) clearInterval(playInterval);
+            playInterval = null;
+            playStartTime = null;
+        }
+
+        // Időzítő
+        let timerTimeout = null;
+        function setTimer(name) {
+            let mins = prompt("Hány perc múlva álljon le a lejátszó?", "30");
+            mins = parseInt(mins);
+            if (!isNaN(mins) && mins > 0) {
+                if (timerTimeout) clearTimeout(timerTimeout);
+                showNotification(`Időzítő beállítva: ${mins} perc`);
+                timerTimeout = setTimeout(() => {
+                    if (audio) audio.pause();
+                    showNotification("Lejátszó kikapcsolt az időzítő miatt.");
+                }, mins * 60000);
+            }
+        }
+        document.getElementById('timerBtn').onclick = function() {
+            setTimer(currentRadio ? currentRadio.name : "");
+        };
+
+        // Megosztás
+        function shareRadio(name) {
+            const radio = radios.find(r => r.name === name);
+            if (!radio) return;
+            const url = radio.stream;
+            navigator.clipboard.writeText(url);
+            showNotification("Stream link vágólapra másolva!");
+        }
+
+        // Részletes adatlap
+        function showInfo(name) {
+            const radio = radios.find(r => r.name === name);
+            if (!radio) return;
+            alert(`${radio.name}\nMűfaj: ${genreLabel(radio.genre)}\nStream: ${radio.stream}`);
+        }
+
+        // Beállítások modal új dizájnnal
+        function showSettings() {
+            let totalTime = 0, totalData = 0;
+            let toplist = [];
+            Object.keys(playTimeStats).forEach(name => {
+                totalTime += playTimeStats[name] || 0;
+                toplist.push({ name, time: playTimeStats[name] || 0 });
+            });
+            Object.keys(playDataStats).forEach(name => {
+                totalData += playDataStats[name] || 0;
+            });
+            toplist.sort((a,b) => b.time - a.time);
+            let html = `
+                <div style="display:flex;flex-wrap:wrap;gap:2rem;">
+                    <div style="flex:1;min-width:220px;">
+                        <h3 style="margin-top:0;color:#1976d2;">Összes hallgatási idő</h3>
+                        <div style="font-size:1.2em;font-weight:bold;">${Math.floor(totalTime/60)} perc</div>
+                        <h3 style="margin-bottom:0.5em;color:#1976d2;">Összes adatforgalom</h3>
+                        <div style="font-size:1.2em;font-weight:bold;">${totalData.toFixed(2)} MB</div>
+                    </div>
+                    <div style="flex:1;min-width:220px;">
+                        <h3 style="margin-top:0;color:#1976d2;">Toplistád</h3>
+                        <ol class="settings-toplist">
+                        ${toplist.slice(0,5).map((item,i)=>`<li>
+                            <b>${item.name}</b><br>
+                            <span style="color:#1976d2;">${Math.floor(item.time/60)} perc</span>
+                            <span style="color:#888;">(${playDataStats[item.name]?.toFixed(2) || 0} MB)</span>
+                        </li>`).join('')}
+                        </ol>
+                    </div>
+                </div>
+                <hr style="margin:1.5em 0;">
+                <h3 style="color:#1976d2;">Részletes adatok</h3>
+                <table class="settings-table">
+                    <thead>
+                        <tr>
+                            <th>Rádió</th>
+                            <th>Idő (perc)</th>
+                            <th>Adat (MB)</th>
+                            <th>Csillag</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.keys(playTimeStats).map(name=>`
+                            <tr>
+                                <td>${name}</td>
+                                <td>${Math.floor(playTimeStats[name]/60)}</td>
+                                <td>${playDataStats[name]?.toFixed(2) || 0}</td>
+                                <td>${'★'.repeat(ratings[name]||0)}${'☆'.repeat(5-(ratings[name]||0))}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('settingsContent').innerHTML = html;
+        }
+
+        // Értesítések
+        function showNotification(msg) {
+            const notif = document.getElementById('notification');
+            notif.textContent = msg;
+            notif.style.display = 'block';
+            setTimeout(() => notif.style.display = 'none', 2500);
+        }
+
+        // Sötét/Világos mód
+        document.getElementById('themeToggle').onclick = function() {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        };
+        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+
+        // Élő műsor értesítés (demo)
+        setInterval(() => {
+            const d = new Date();
+            if (d.getMinutes() === 0 && d.getSeconds() < 2) {
+                showNotification("Élő műsor kezdődik!");
+            }
+        }, 1000);
+
+        // Rádiók számlálója
+        document.getElementById('radioCount').textContent = `Összes rádió: ${radios.length}`;
+    </script>
+</body>
+</html>
